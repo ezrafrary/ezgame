@@ -6,7 +6,7 @@ class Platformer extends Phaser.Scene {
         this.keyD = null;
         this.keyW = null;
     }
-
+ 
     init() {
         // variables and settings
         this.ACCELERATION = 400;
@@ -39,7 +39,9 @@ class Platformer extends Phaser.Scene {
         this.hiddenLayer1 = this.map.createLayer("hiddenLayer1", this.tileset, 0, 0);
         this.hiddenLayer2 = this.map.createLayer("hiddenLayer2", this.tileset, 0, 0);
         this.hiddenLayer3 = this.map.createLayer("hiddenLayer3", this.tileset, 0, 0);
+        this.hiddenLayer4 = this.map.createLayer("hiddenLayer4", this.tileset, 0, 0);
         this.winnerScreen = this.map.createLayer("winnerscreen", this.tileset, 0, 0);
+
 
 
         // Make it collidable
@@ -55,10 +57,14 @@ class Platformer extends Phaser.Scene {
         this.hiddenLayer3.setCollisionByProperty({
             collides: false
         });
+        this.hiddenLayer4.setCollisionByProperty({
+            collides: false
+        });
         this.winnerScreen.setCollisionByProperty({
             collides: false
         });
         this.winnerScreen.setAlpha(0);
+        this.hiddenLayer4.setAlpha(0);
         this.hiddenLayer3.setAlpha(0);
         this.hiddenLayer2.setAlpha(0);
         this.hiddenLayer1.setAlpha(0); //make it invisible
@@ -78,17 +84,23 @@ class Platformer extends Phaser.Scene {
             key: "tilemap_sheet",
             frame: 111
         });
+        this.shields = this.map.createFromObjects("Objects", {
+            name: "forcefield",
+            key: "tilemap_sheet",
+            frame: 54
+        });
         
 
 
         // TODO: Add turn into Arcade Physics here
         this.physics.world.enable(this.coins, Phaser.Physics.Arcade.STATIC_BODY);
         this.physics.world.enable(this.flags, Phaser.Physics.Arcade.STATIC_BODY);
-
+        this.physics.world.enable(this.shields, Phaser.Physics.Arcade.STATIC_BODY);
         // Create a Phaser group out of the array this.coins
         // This will be used for collision detection below.
         this.coinGroup = this.add.group(this.coins);
         this.flagGroup = this.add.group(this.flags);
+        this.shieldGroup = this.add.group(this.shields);
 
         // set up player avatar
         my.sprite.player = this.physics.add.sprite(30, 345, "platformer_characters", "tile_0000.png");
@@ -99,6 +111,7 @@ class Platformer extends Phaser.Scene {
         this.physics.add.collider(my.sprite.player, this.hiddenLayer1);
         this.physics.add.collider(my.sprite.player, this.hiddenLayer2);
         this.physics.add.collider(my.sprite.player, this.hiddenLayer3);
+        this.physics.add.collider(my.sprite.player, this.hiddenLayer4);
         this.physics.add.collider(my.sprite.player, this.winnerScreen);
 
         this.physics.add.collider(my.sprite.player, my.sprite.playerHelper);
@@ -108,6 +121,7 @@ class Platformer extends Phaser.Scene {
         this.physics.add.collider(my.sprite.playerHelper, this.hiddenLayer1);
         this.physics.add.collider(my.sprite.playerHelper, this.hiddenLayer2);
         this.physics.add.collider(my.sprite.playerHelper, this.hiddenLayer3);
+        this.physics.add.collider(my.sprite.playerHelper, this.hiddenLayer4);
         this.physics.add.collider(my.sprite.playerHelper, this.winnerScreen);
 
 
@@ -123,6 +137,17 @@ class Platformer extends Phaser.Scene {
             this.levelsCompleted = this.levelsCompleted + 1;
             this.makeNewLayersVisible();
         });
+
+        this.physics.add.overlap(my.sprite.player, this.shieldGroup, (obj1, obj2) => {
+            console.log(my.sprite.player.body.velocity.x);
+            if(my.sprite.player.body.velocity.x > 600){
+                console.log("test")
+            }else{
+                
+                my.sprite.player.setAccelerationX(-10);
+                my.sprite.player.setVelocityX(-500);
+            }
+        })
 
         // set up Phaser-provided cursor key input
         cursors = this.input.keyboard.createCursorKeys();
@@ -166,8 +191,12 @@ class Platformer extends Phaser.Scene {
     makeNewLayersVisible(){
         console.log(this.levelsCompleted)
         if(this.levelsCompleted == 1){
-            this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
-        }else if(this.levelsCompleted == 0){
+            this.cameras.main.setBounds(0, 0, this.map.widthInPixels, 468);
+        }
+        if(this.levelsCompleted == 2){
+            this.cameraStartX.main.setBounds(0,0, this.map.widthInPixels, this.map.heightInPixels);
+        }
+        if(this.levelsCompleted == 0){
             if(this.coinsCollected == 1){
                 this.hiddenLayer1.setAlpha(100);
                 this.hiddenLayer1.setCollisionByProperty({collides: true});
@@ -179,6 +208,12 @@ class Platformer extends Phaser.Scene {
             if(this.coinsCollected == 3){
                 this.hiddenLayer3.setAlpha(100);
                 this.hiddenLayer3.setCollisionByProperty({collides: true});
+            }
+        }
+        if(this.levelsCompleted == 1){
+            if(this.coinsCollected == 4){
+                this.hiddenLayer4.setAlpha(100);
+                this.hiddenLayer4.setCollisionByProperty({collides: true});
             }
         }
         
